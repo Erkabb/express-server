@@ -1,28 +1,24 @@
 import React, { useEffect, useState } from "react";
 import UserRow from "./usercard";
 import Subheader from "./user-head";
+import UserModal from "./edit-user-modal";
 
 const Maincontent = () => {
   const [users, setUsers] = useState();
 
+  const [isEdit, setIsEdit] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+
+  const show = () => {
+    setIsOpen(true);
+  };
+  const hide = () => {
+    setIsOpen(false);
+  };
   const getEmployees = async () => {
     const res = await fetch("http://localhost:8000/users");
     const { users } = await res.json();
     setUsers(users);
-  };
-
-  const createEmployee = async () => {
-    const res = await fetch("http://localhost:8000/users", {
-      method: "POST",
-      headers: { "Content-type": "application/json" },
-      body: JSON.stringify({
-        firstname: "Бат",
-        lastname: "Наран",
-        email: "batbat@gmail.com",
-        position: "Developer",
-        profileImg: "https://img.daisyui.com/images/profile/demo/2@94.webp",
-      }),
-    });
   };
 
   const deleteEmp = async (userEid) => {
@@ -31,8 +27,29 @@ const Maincontent = () => {
     });
   };
 
-  const editEmp = async (employee) => {
-    const res = await fetch(`http://localhost:8000/users/${employee}`);
+  const createEmployee = async (newEmployee) => {
+    const res = await fetch("http://localhost:8000/users", {
+      method: "POST",
+      headers: { "Content-type": "application/json" },
+      body: JSON.stringify(newEmployee),
+    });
+    const { user } = await res.json();
+    setUsers([...users, user]);
+  };
+
+  const updEmployee = async (id, oldEmployee) => {
+    const res = await fetch("http://localhost:8000/users/" + id, {
+      method: "PUT",
+      headers: { "Content-type": "application/json" },
+      body: JSON.stringify(oldEmployee),
+    });
+    const { user } = await res.json();
+    setUsers([...users, user]);
+  };
+
+  const handleAdd = () => {
+    setIsEdit(false);
+    show();
   };
 
   useEffect(() => {
@@ -40,6 +57,9 @@ const Maincontent = () => {
   }, []);
   return (
     <div className="w-[1200px] m-auto">
+      <button className="btn btn-info btn-outline" onClick={handleAdd}>
+        Add employee
+      </button>
       <table className="table">
         <thead>
           <Subheader />
@@ -47,16 +67,20 @@ const Maincontent = () => {
         <tbody>
           {users?.map((user) => {
             return (
-              <UserRow user={user} deleteEmp={deleteEmp} editEmp={editEmp} />
+              <div>
+                <UserRow user={user} deleteEmp={deleteEmp} />
+              </div>
             );
           })}
         </tbody>
       </table>
-      <div>
-        <button className="btn btn-info btn-outline" onClick={createEmployee}>
-          Add employee
-        </button>
-      </div>
+      <div></div>
+      <UserModal
+        isOpen={isOpen}
+        close={hide}
+        isEdit={isEdit}
+        createEmployee={createEmployee}
+      />
     </div>
   );
 };
